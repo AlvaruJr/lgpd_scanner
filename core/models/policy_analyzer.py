@@ -5,7 +5,8 @@ from bs4 import BeautifulSoup
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
-# Carrega as variaveis de ambiente do arquivo .env oculto
+
+# Carrega as variaveis de ambiente de forma segura
 load_dotenv()
 
 class PolicyAnalyzer:
@@ -13,7 +14,6 @@ class PolicyAnalyzer:
     
     def __init__(self, url_politica):
         self.url_politica = url_politica
-        # Resgata a chave do ambiente sem expor nenhuma string no codigo fonte
         self.api_key = os.getenv("GEMINI_API_KEY")
         
     def analisar_texto_politica(self):
@@ -30,7 +30,6 @@ class PolicyAnalyzer:
             }
             
         try:
-            # 1. Extracao do texto estatico da pagina de privacidade
             headers = {'User-Agent': 'Mozilla/5.0'}
             resposta = requests.get(self.url_politica, headers=headers, timeout=10)
             soup = BeautifulSoup(resposta.text, 'html.parser')
@@ -41,9 +40,8 @@ class PolicyAnalyzer:
             texto_limpo = texto_limpo[:15000] 
 
             if not self.api_key:
-                raise ValueError("Chave de API GEMINI_API_KEY nao foi configurada no arquivo .env")
+                raise ValueError("Chave de API GEMINI_API_KEY nao localizada no arquivo .env")
 
-            # 2. Configura a chamada com a IA do Google
             client = genai.Client(api_key=self.api_key)
             
             prompt = f"""
@@ -76,7 +74,6 @@ class PolicyAnalyzer:
             
             analise_ia = json.loads(response.text)
             
-            # 3. Calcula o score com base no veredito semantico da IA
             score_texto = 100
             requisitos_legais = {}
             chaves_analise = ["Direitos dos Titulares", "Canal de Contato (DPO)", "Bases Legais e Finalidade", "Compartilhamento com Terceiros"]
@@ -87,11 +84,11 @@ class PolicyAnalyzer:
                 if not presente:
                     score_texto = max(score_texto - 25, 0)
                     
+            # 🔥 RETORNO ALINHADO: Garante a entrega do parecer textual extraido da IA
             return {
                 "score_texto": score_texto,
                 "requisitos_identificados": requisitos_legais,
-                # 🔥 CORREÇÃO: Busca a chave exata "Resumo_Parecer" gerada pelo prompt da IA
-                "parecer_ia": analise_ia.get("Resumo_Parecer", "Análise concluída com sucesso pela IA.")
+                "parecer_ia": analise_ia.get("Resumo_Parecer", "Analise concluida com sucesso pela IA.")
             }
             
         except Exception as e:

@@ -35,25 +35,25 @@ class ReportGenerator:
                 "total_cookies": self.dados_cookies.get("cookies_encontrados", 0),
                 "link_politica_encontrado": self.dados_cookies.get("politica_encontrada", False),
                 "requisitos_legais_texto": self.dados_politica.get("requisitos_identificados", {}),
-                "scripts_terceiros": self.dados_cookies.get("scripts_terceiros", [])
+                "scripts_terceiros": self.dados_cookies.get("scripts_terceiros", []),
+                # 🔥 CORREÇÃO ESSENCIAL: Repassa o parecer obtido pelo PolicyAnalyzer para a View
+                "parecer_ia": self.dados_politica.get("parecer_ia", "Analise de conteudo indisponivel.")
             }
         }
 
     @staticmethod
     def exportar_para_pdf(payload):
-        """Desenha o PDF sem nenhum caractere especial ou emoji para garantir compatibilidade."""
+        """Desenha o PDF do relatório técnico sem caracteres especiais."""
         pdf = FPDF()
         pdf.add_page()
         pdf.set_font("Helvetica", size=12)
         
-        # --- CABEÇALHO DO DOCUMENTO ---
         pdf.set_font("Helvetica", "B", size=16)
         pdf.cell(200, 10, txt="RELATORIO TECNICO DE AUDITORIA - LGPD", ln=True, align="C")
         pdf.set_font("Helvetica", size=10)
         pdf.cell(200, 10, txt=f"Gerado por: {payload['cabecalho']['sistema']}", ln=True, align="C")
         pdf.ln(10)
         
-        # --- INFORMAÇÕES GERAIS ---
         pdf.set_font("Helvetica", "B", size=12)
         pdf.cell(200, 8, txt="1. Resumo da Vistoria", ln=True)
         pdf.set_font("Helvetica", size=11)
@@ -61,7 +61,6 @@ class ReportGenerator:
         pdf.cell(200, 6, txt=f"URL Analisada: {payload['cabecalho']['url_vistoriada']}", ln=True)
         pdf.ln(5)
         
-        # --- DIAGNÓSTICO ---
         pdf.set_font("Helvetica", "B", size=12)
         pdf.cell(200, 8, txt="2. Avaliacao de Conformidade", ln=True)
         pdf.set_font("Helvetica", size=11)
@@ -69,7 +68,6 @@ class ReportGenerator:
         pdf.cell(200, 6, txt=f"Grau de Risco Legal: {payload['diagnostico']['nivel_risco']}", ln=True)
         pdf.ln(5)
         
-        # --- DETALHES TÉCNICOS ---
         pdf.set_font("Helvetica", "B", size=12)
         pdf.cell(200, 8, txt="3. Evidencias Coletadas em Rede", ln=True)
         pdf.set_font("Helvetica", size=11)
@@ -77,18 +75,15 @@ class ReportGenerator:
         politica_ok = "Identificada" if payload['detalhes_tecnicos']['link_politica_encontrado'] else "Ausente"
         pdf.cell(200, 6, txt=f"Link de Politica de Privacidade: {politica_ok}", ln=True)
         
-        # Remove caracteres indesejados dos scripts capturados
         scripts = payload['detalhes_tecnicos'].get('scripts_terceiros', [])
         if scripts:
             pdf.cell(200, 6, txt="Scripts e Rastreadores externos mapeados:", ln=True)
             pdf.set_font("Helvetica", "I", size=10)
             for s in scripts:
-                # Limpa travessões estranhos se existirem na string
                 s_limpo = s.replace(chr(8212), "-").replace("—", "-")
                 pdf.cell(200, 5, txt=f"  * {s_limpo}", ln=True)
         pdf.ln(5)
         
-        # --- CLÁUSULAS TEXTUAIS ---
         pdf.set_font("Helvetica", "B", size=12)
         pdf.cell(200, 8, txt="4. Verificacao de Clausulas Obrigatorias", ln=True)
         pdf.set_font("Helvetica", size=11)
@@ -97,7 +92,6 @@ class ReportGenerator:
         if requisitos:
             for req, status in requisitos.items():
                 status_txt = "CONFORME" if status else "AUSENTE"
-                # Limpa agressivamente qualquer caractere Unicode/Emoji das chaves textuais
                 req_limpo = str(req)
                 for char in ["🤖", "📊", "🛡️", "—", "–"]:
                     req_limpo = req_limpo.replace(char, "")

@@ -1,0 +1,14 @@
+# Caches do Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Caches do Streamlit e ambiente externo
+.streamlit/
+.venv/
+venv/
+
+# Relatórios gerados temporariamente
+assets/reports/*.pdf
+
+.env

@@ -1,63 +1,85 @@
+import time
+from urllib.parse import urljoin
 from playwright.sync_api import sync_playwright
-from bs4 import BeautifulSoup
 
 class CookieScout:
-    """Model avançado responsável por inspecionar cookies e requisições usando Playwright."""
+    """Model responsável pela varredura dinâmica de cookies e identificação de políticas."""
     
     def __init__(self, url):
         self.url = url
 
     def inspecionar_site(self):
         try:
-            dados_auditoria = {
-                "status_code": 200,
-                "cookies_encontrados": 0,
-                "lista_cookies": [],
-                "scripts_terceiros": [],
-                "politica_encontrada": False
-            }
-            
-            # Inicializa o navegador automatizado em segundo plano (headless=True)
             with sync_playwright() as p:
                 browser = p.chromium.launch(headless=True)
-                page = browser.new_page()
                 
-                # Lista para interceptar todas as requisições de rede (scripts externos)
-                urls_capturadas = []
-                page.on("request", lambda request: urls_capturadas.append(request.url))
+                context = browser.new_context(
+                    viewport={"width": 1920, "height": 1080},
+                    user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                )
+                page = context.new_page()
                 
-                # Navega até o site e espera até que a rede fique ociosa (scripts carregados)
-                resposta = page.goto(self.url, wait_until="networkidle", timeout=15000)
-                if resposta:
-                    dados_auditoria["status_code"] = resposta.status
+                page.goto(self.url, wait_until="load", timeout=25000)
                 
-                # 1. Captura TODOS os cookies reais (inclusive os gerados por JavaScript)
+                # Garante uma rolagem para carregar os scripts assíncronos das plataformas
+                page.evaluate("window.scrollTo(0, document.body.scrollHeight / 2);")
+                time.sleep(2)
+                
                 cookies = page.context.cookies()
-                dados_auditoria["cookies_encontrados"] = len(cookies)
-                dados_auditoria["lista_cookies"] = [c['name'] for c in cookies]
+                html_content = page.content().lower()
                 
-                # 2. Filtra requisições de terceiros conhecidas por rastreamento
-                rastreadores_comuns = ['analytics', 'pixel', 'facebook', 'doubleclick', 'hotjar', 'tagmanager']
-                for url_req in urls_capturadas:
-                    if any(r in url_req.lower() for r in list(set(rastreadores_comuns))):
-                        # Guarda apenas o domínio ou nome do rastreador para o relatório
-                        dados_auditoria["scripts_terceiros"].append(url_req.split('/')[2])
+                url_politica_encontrada = None
+                politica_encontrada = False
+                termos_chave = ["privacidade", "privacy", "politica-de-privacidade"]
                 
-                # Remove duplicados da lista de scripts
-                dados_auditoria["scripts_terceiros"] = list(set(dados_auditoria["scripts_terceiros"]))
+                # 🔥 CORREÇÃO CRÍTICA: Trocamos o query_selector_all pelo locator() do Playwright.
+                # Os Locators perfuram estruturas de #shadow-root (Web Components do YouTube) automaticamente.
+                links_locator = page.locator("a")
+                quantidade_links = links_locator.count()
                 
-                # 3. Busca o link da política de privacidade no HTML renderizado
-                html_conteudo = page.content()
-                soup = BeautifulSoup(html_conteudo, 'html.parser')
-                for link in soup.find_all('a', href=True):
-                    href_minimo = link['href'].lower()
-                    if 'privacidade' in href_minimo or 'privacy' in href_minimo:
-                        dados_auditoria["politica_encontrada"] = True
-                        break
+                for i in range(quantidade_links):
+                    try:
+                        link = links_locator.nth(i)
+                        href = link.get_attribute("href")
+                        texto = link.text_content()
+                        texto_limpo = texto.lower().strip() if texto else ""
+                        
+                        # Verifica se o link textual ou a propriedade destino batem com os termos LGPD
+                        if href and any(termo in texto_limpo or termo in href.lower() for termo in termos_chave):
+                            politica_encontrada = True
+                            url_politica_encontrada = urljoin(self.url, href) if href.startswith("/") else href
+                            break
+                    except Exception:
+                        continue
+                
+                # STRATEGY FALLBACK: Caso caia em uma tela de consentimento global isolada
+                if not politica_encontrada:
+                    for termo in termos_chave:
+                        busca_direta = page.locator(f"a:has-text('{termo}')").first
+                        if busca_direta.count() > 0:
+                            href = busca_direta.get_attribute("href")
+                            if href:
+                                politica_encontrada = True
+                                url_politica_encontrada = urljoin(self.url, href) if href.startswith("/") else href
+                                break
+
+                # Mapeia scripts de rastreamento capturados no tráfego
+                scripts_mapeados = []
+                if "google-analytics.com" in html_content or "googletagmanager.com" in html_content or "analytics.google" in html_content:
+                    scripts_mapeados.append("www.googletagmanager.com")
+                if "connect.facebook.net" in html_content or "facebook.com/tr" in html_content:
+                    scripts_mapeados.append("connect.facebook.net (Meta Pixel)")
+                if "doubleclick.net" in html_content:
+                    scripts_mapeados.append("static.doubleclick.net (Google Ads)")
                 
                 browser.close()
                 
-            return dados_auditoria
-            
+                return {
+                    "cookies_encontrados": len(cookies),
+                    "scripts_terceiros": scripts_mapeados,
+                    "politica_encontrada": politica_encontrada,
+                    "url_politica_encontrada": url_politica_encontrada
+                }
+                
         except Exception as e:
             return {"erro": f"Falha na vistoria automatizada: {str(e)}"}

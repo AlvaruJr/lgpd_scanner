@@ -1,1 +1,54 @@
-[]
+[
+    {
+        "cabecalho": {
+            "sistema": "Scanner de Conformidade LGPD v1.0",
+            "data_auditoria": "05/06/2026 17:51:03",
+            "url_vistoriada": "https://www.youtube.com/uol"
+        },
+        "diagnostico": {
+            "score_geral": 55,
+            "nivel_risco": "Medio Risco"
+        },
+        "detalhes_tecnicos": {
+            "total_cookies": 10,
+            "link_politica_encontrado": true,
+            "requisitos_legais_texto": {
+                "Direitos dos Titulares": true,
+                "Canal de Contato (DPO)": false,
+                "Bases Legais e Finalidade": false,
+                "Compartilhamento com Terceiros": true
+            },
+            "scripts_terceiros": [
+                "static.doubleclick.net (Google Ads)"
+            ],
+            "parecer_ia": "A política detalha a coleta, finalidade e compartilhamento de dados, além de oferecer controles para gerenciar e excluir informações. Contudo, não especifica as bases legais do tratamento nem um canal de contato explícito para o DPO/Encarregado de Dados, o que é uma falha crítica sob a LGPD."
+        }
+    },
+    {
+        "cabecalho": {
+            "sistema": "Scanner de Conformidade LGPD v1.0",
+            "data_auditoria": "05/06/2026 17:27:48",
+            "url_vistoriada": "https://uolsac.helpsite.cloud/sacuol/category/bate-papo-uol"
+        },
+        "diagnostico": {
+            "score_geral": 30,
+            "nivel_risco": "Alto Risco - Critico"
+        },
+        "detalhes_tecnicos": {
+            "total_cookies": 22,
+            "link_politica_encontrado": true,
+            "requisitos_legais_texto": {
+                "Direitos dos Titulares": false,
+                "Canal de Contato (DPO)": false,
+                "Bases Legais e Finalidade": false,
+                "Compartilhamento com Terceiros": false
+            },
+            "scripts_terceiros": [
+                "www.googletagmanager.com",
+                "stats.g.doubleclick.net",
+                "analytics.google.com"
+            ],
+            "parecer_ia": "Erro na analise semantica: Chave de API GEMINI_API_KEY nao localizada no arquivo .env"
+        }
+    }
+]

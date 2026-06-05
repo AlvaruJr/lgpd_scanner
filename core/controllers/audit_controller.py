@@ -1,7 +1,7 @@
 from core.models.cookie_scout import CookieScout
 from core.models.policy_analyzer import PolicyAnalyzer
 from core.models.report_generator import ReportGenerator
-from core.models.history_manager import HistoryManager  # 🔥 Novo Import
+from core.models.history_manager import HistoryManager
 
 class AuditController:
     """Controller que coordena o fluxo avançado de auditoria entre Models e Views."""
@@ -28,8 +28,10 @@ class AuditController:
         cookies_encontrados = dados_cookies.get("cookies_encontrados", 0)
         scripts_terceiros = dados_cookies.get("scripts_terceiros", [])
         politica_encontrada = dados_cookies.get("politica_encontrada", False)
+        # 🔥 Pega o link real extraído pelo Crawler
+        url_politica_real = dados_cookies.get("url_politica_encontrada")
         
-        # Penalizações baseadas em critérios objectives
+        # Penalizações baseadas em critérios objetivos
         if cookies_encontrados > 0:
             score_tec -= min(cookies_encontrados * 2, 20)
             
@@ -41,9 +43,9 @@ class AuditController:
             
         dados_cookies["score_conformidade"] = max(score_tec, 0)
         
-        # 2. Executa a análise textual inteligente da política de privacidade (Se ela existir)
-        url_politica = url if politica_encontrada else None
-        analyzer = PolicyAnalyzer(url_politica)
+        # 🔥 CORREÇÃO: Alimenta o analisador com a URL real do documento, e não com a home da plataforma
+        url_politica_analise = url_politica_real if politica_encontrada else None
+        analyzer = PolicyAnalyzer(url_politica_analise)
         dados_politica = analyzer.analisar_texto_politica()
         
         # 3. Consolida os dados e gera o payload final estruturado do relatório técnico
@@ -56,7 +58,7 @@ class AuditController:
         else:
             relatorio_final["detalhes_tecnicos"] = {"scripts_terceiros": scripts_terceiros}
             
-        # 🔥 PERSISTÊNCIA: Grava o relatório gerado com sucesso direto no arquivo JSON local
+        # Persiste o relatório gerado com sucesso direto no arquivo JSON local
         HistoryManager.salvar_relatorio(relatorio_final)
             
         return relatorio_final

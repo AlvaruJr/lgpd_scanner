@@ -3,7 +3,7 @@ from core.views.components import UIComponents
 from core.models.report_generator import ReportGenerator
 
 class DashboardView:
-    """View responsável por renderizar a interface do usuário e o painel de exportação na Sidebar."""
+    """View responsavel por renderizar a interface do usuario, exibindo o parecer da IA."""
     
     def __init__(self, controller):
         self.controller = controller
@@ -13,7 +13,6 @@ class DashboardView:
         st.subheader("Ferramenta de Auditoria Automatizada para TCC")
         st.write("Insira a URL de uma aplicação web para iniciar a vistoria técnica.")
 
-        # Campo de entrada de URL
         url_alvo = st.text_input("URL do site/app a ser vistoriado:", placeholder="https://exemplo.com.br")
 
         if st.button("Iniciar Vistoria Técnica", type="primary"):
@@ -26,10 +25,9 @@ class DashboardView:
                     else:
                         st.success("Vistoria concluída com sucesso!")
                         
-                        # --- 📄 GERAÇÃO DO PDF NA SIDEBAR (BARRA LATERAL) ---
+                        # --- 📄 EXPORTAÇÃO EM PDF NA SIDEBAR ---
                         try:
                             pdf_bytes = ReportGenerator.exportar_para_pdf(relatorio)
-                            
                             with st.sidebar:
                                 st.header("📄 Exportar Evidências")
                                 st.write("O relatório técnico oficial foi gerado com sucesso.")
@@ -44,9 +42,17 @@ class DashboardView:
                         except Exception as e:
                             st.sidebar.error(f"Erro ao gerar PDF: {str(e)}")
                         
-                        # 📊 Renderiza o painel visual na página central
+                        # 📊 RENDERIZAÇÃO CENTRAL DOS GRÁFICOS E DADOS
                         UIComponents.exibir_header_relatorio(relatorio["cabecalho"])
                         UIComponents.exibir_alerta_risco(relatorio["diagnostico"])
+                        
+                        # --- 🔥 NOVO: IMPACTO VISUAL DO MODELO COGNITIVO DA IA ---
+                        st.write("### 🧠 Parecer Analítico da Inteligência Artificial:")
+                        # Resgata o parecer textual de dentro da estrutura trazida pelo controller
+                        parecer_texto = relatorio["detalhes_tecnicos"]["requisitos_legais_texto"]
+                        
+                        # Cria um bloco informativo destacado na tela
+                        st.info(relatorio.get("detalhes_tecnicos", {}).get("parecer_ia", "Análise inconclusiva."))
                         
                         st.write("### 🔍 Detalhes Técnicos Encontrados:")
                         st.write(f"- **Total de cookies identificados:** {relatorio['detalhes_tecnicos']['total_cookies']}")

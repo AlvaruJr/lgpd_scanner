@@ -1,6 +1,7 @@
 from core.models.cookie_scout import CookieScout
 from core.models.policy_analyzer import PolicyAnalyzer
 from core.models.report_generator import ReportGenerator
+from core.models.history_manager import HistoryManager  # 🔥 Novo Import
 
 class AuditController:
     """Controller que coordena o fluxo avançado de auditoria entre Models e Views."""
@@ -28,7 +29,7 @@ class AuditController:
         scripts_terceiros = dados_cookies.get("scripts_terceiros", [])
         politica_encontrada = dados_cookies.get("politica_encontrada", False)
         
-        # Penalizações baseadas em critérios objetivos
+        # Penalizações baseadas em critérios objectives
         if cookies_encontrados > 0:
             score_tec -= min(cookies_encontrados * 2, 20)
             
@@ -55,4 +56,11 @@ class AuditController:
         else:
             relatorio_final["detalhes_tecnicos"] = {"scripts_terceiros": scripts_terceiros}
             
+        # 🔥 PERSISTÊNCIA: Grava o relatório gerado com sucesso direto no arquivo JSON local
+        HistoryManager.salvar_relatorio(relatorio_final)
+            
         return relatorio_final
+
+    def obter_historico_local(self):
+        """Busca a lista de relatórios antigos armazenados no disco."""
+        return HistoryManager.listar_historico()

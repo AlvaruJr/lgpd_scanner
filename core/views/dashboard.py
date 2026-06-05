@@ -64,7 +64,31 @@ class DashboardView:
             else:
                 st.warning("Por favor, informe uma URL antes de começar.")
 
-        # 2. Renderização Persistente de Dados
+        # 🔥 2. NOVO BLOCO: COMPONENTE VISUAL DE HISTÓRICO EM DISCO
+        historico = self.controller.obter_historico_local()
+        if historico:
+            st.write("") # Espaçador sutil
+            with st.expander("📋 Ver Vistorias Arquivadas em Disco", expanded=False):
+                st.write("Selecione um relatório gerado anteriormente para restaurá-lo na tela:")
+                
+                for idx, rel in enumerate(historico):
+                    col_url, col_data, col_score, col_acao = st.columns([3, 2, 1, 1])
+                    
+                    with col_url:
+                        st.write(f"🌐 `{rel['cabecalho']['url_vistoriada']}`")
+                    with col_data:
+                        st.caption(f"📅 {rel['cabecalho']['data_auditoria']}")
+                    with col_score:
+                        score = rel['diagnostico']['score_geral']
+                        cor_score = "🟢" if score >= 80 else "🟡" if score >= 50 else "🔴"
+                        st.write(f"{cor_score} **{score} pts**")
+                    with col_acao:
+                        if st.button("Restaurar", key=f"btn_restaurar_{idx}", use_container_width=True):
+                            # Alimenta o estado global da aplicação e força a renderização imediata do passado
+                            st.session_state["relatorio_atual"] = rel
+                            st.rerun()
+
+        # 3. Renderização Persistente de Dados
         if "relatorio_atual" in st.session_state:
             relatorio = st.session_state["relatorio_atual"]
             

@@ -17,7 +17,7 @@ class DashboardView:
 
         if st.button("Iniciar Vistoria Técnica", type="primary"):
             if url_alvo:
-                with st.spinner("Realizando varredura nos cookies e políticas..."):
+                with st.spinner("Realizando varredura dinâmica nos cookies e políticas..."):
                     # Chama o controller para processar o fluxo completo
                     relatorio = self.controller.iniciar_vistoria(url_alvo)
                     
@@ -26,7 +26,7 @@ class DashboardView:
                     else:
                         st.success("Vistoria concluída com sucesso!")
                         
-                        # 📊 Usa os novos componentes visuais para renderizar a tela
+                        # 📊 Usa os componentes visuais para renderizar o cabeçalho e o score
                         UIComponents.exibir_header_relatorio(relatorio["cabecalho"])
                         UIComponents.exibir_alerta_risco(relatorio["diagnostico"])
                         
@@ -34,7 +34,16 @@ class DashboardView:
                         st.write(f"- **Total de cookies identificados:** {relatorio['detalhes_tecnicos']['total_cookies']}")
                         st.write(f"- **Política de Privacidade visível:** {'✅ Sim' if relatorio['detalhes_tecnicos']['link_politica_encontrado'] else '❌ Não'}")
                         
-                        # Mostra a tabela com os requisitos da LGPD que a IA mapeou
+                        # 🔥 NOVO: Mostra os scripts de terceiros capturados pelo Playwright
+                        scripts = relatorio['detalhes_tecnicos'].get('scripts_terceiros', [])
+                        if scripts:
+                            st.write("- **Rastreadores e scripts de terceiros identificados:**")
+                            for script in scripts:
+                                st.caption(f"  • 🛑 {script}")
+                        else:
+                            st.write("- **Rastreadores e scripts de terceiros:** ✨ Nenhum rastreador comum identificado.")
+                        
+                        # Mostra a tabela com os requisitos da LGPD textuais
                         UIComponents.renderizar_grafico_requisitos(relatorio["detalhes_tecnicos"]["requisitos_legais_texto"])
             else:
                 st.warning("Por favor, informe uma URL antes de começar.")

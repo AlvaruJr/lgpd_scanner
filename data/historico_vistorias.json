@@ -2,6 +2,31 @@
     {
         "cabecalho": {
             "sistema": "Scanner de Conformidade LGPD v1.0",
+            "data_auditoria": "05/06/2026 18:22:30",
+            "url_vistoriada": "https://sobreuol.noticias.uol.com.br/normas-de-seguranca-e-privacidade"
+        },
+        "diagnostico": {
+            "score_geral": 38,
+            "nivel_risco": "Alto Risco - Critico"
+        },
+        "detalhes_tecnicos": {
+            "total_cookies": 2,
+            "link_politica_encontrado": true,
+            "requisitos_legais_texto": {
+                "Direitos dos Titulares": false,
+                "Canal de Contato (DPO)": false,
+                "Bases Legais e Finalidade": false,
+                "Compartilhamento com Terceiros": false
+            },
+            "scripts_terceiros": [
+                "www.googletagmanager.com"
+            ],
+            "parecer_ia": "Não foi fornecido nenhum texto de Política de Privacidade para análise. Portanto, não foi possível verificar a presença dos requisitos da LGPD solicitados."
+        }
+    },
+    {
+        "cabecalho": {
+            "sistema": "Scanner de Conformidade LGPD v1.0",
             "data_auditoria": "05/06/2026 17:51:03",
             "url_vistoriada": "https://www.youtube.com/uol"
         },
